@@ -1,0 +1,238 @@
+import React, { useState, useCallback } from "react";
+import { StyleSheet, View, ScrollView, Share, Alert, Modal, Pressable, Image } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useHeaderHeight } from "@react-navigation/elements";
+import { useFocusEffect } from "@react-navigation/native";
+import * as Haptics from "expo-haptics";
+
+import { useTheme } from "@/hooks/useTheme";
+import { Spacing, BorderRadius } from "@/constants/theme";
+import { Settings, getSettings, updateSettings, exportData, exportDataAsText } from "@/lib/storage";
+import { SettingsRow } from "@/components/SettingsRow";
+import { ThemedText } from "@/components/ThemedText";
+
+export default function SettingsScreen() {
+  const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
+  const { theme } = useTheme();
+
+  const [settings, setSettings] = useState<Settings | null>(null);
+  const [showAbout, setShowAbout] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  const loadSettings = useCallback(async () => {
+    const data = await getSettings();
+    setSettings(data);
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadSettings();
+    }, [loadSettings])
+  );
+
+  const handleToggleHighContrast = async (value: boolean) => {
+    const updated = await updateSettings({ highContrastMode: value });
+    setSettings(updated);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const jsonData = await exportData();
+      const textData = await exportDataAsText();
+
+      const message = `THE HAND — LEDGER EXPORT\n\n${textData}\n\n---\n\nJSON Data:\n${jsonData}`;
+
+      await Share.share({
+        message,
+        title: "The Hand Export",
+      });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (error) {
+      if ((error as any).message !== "User did not share") {
+        Alert.alert("Export Failed", "Could not export your data. Please try again.");
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  return (
+    <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingTop: headerHeight + Spacing.xl,
+            paddingBottom: insets.bottom + Spacing["3xl"],
+          },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.section}>
+          <ThemedText style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+            DATA
+          </ThemedText>
+          <SettingsRow
+            label="Export Data"
+            description={exporting ? "Exporting..." : "Share as JSON + plain text"}
+            onPress={handleExport}
+            showChevron
+          />
+        </View>
+
+        <View style={styles.section}>
+          <ThemedText style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+            ACCESSIBILITY
+          </ThemedText>
+          <SettingsRow
+            label="High Contrast Mode"
+            toggle={{
+              value: settings?.highContrastMode ?? false,
+              onValueChange: handleToggleHighContrast,
+            }}
+          />
+        </View>
+
+        <View style={styles.section}>
+          <ThemedText style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+            ABOUT
+          </ThemedText>
+          <SettingsRow
+            label="About The Hand"
+            onPress={() => setShowAbout(true)}
+            showChevron
+          />
+        </View>
+
+        <View style={styles.footerPadding} />
+      </ScrollView>
+
+      <Modal
+        visible={showAbout}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowAbout(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.aboutModal, { backgroundColor: theme.backgroundDefault }]}>
+            <Image
+              source={require("../../assets/images/about-illustration.png")}
+              style={styles.aboutImage}
+              resizeMode="contain"
+            />
+            <ThemedText type="h2" style={styles.aboutTitle}>
+              The Hand
+            </ThemedText>
+            <ThemedText style={[styles.aboutVersion, { color: theme.textSecondary }]}>
+              Version 0.1
+            </ThemedText>
+            <ThemedText style={[styles.aboutDescription, { color: theme.textSecondary }]}>
+              A private ledger for recording what you built, who you helped, and what you learned—without performance or judgment.
+            </ThemedText>
+
+            <View style={styles.principlesList}>
+              <ThemedText style={[styles.principleItem, { color: theme.textSecondary }]}>
+                Private by default
+              </ThemedText>
+              <ThemedText style={[styles.principleItem, { color: theme.textSecondary }]}>
+                Local-first
+              </ThemedText>
+              <ThemedText style={[styles.principleItem, { color: theme.textSecondary }]}>
+                No scoring or streaks
+              </ThemedText>
+              <ThemedText style={[styles.principleItem, { color: theme.textSecondary }]}>
+                You own your data
+              </ThemedText>
+            </View>
+
+            <Pressable
+              onPress={() => setShowAbout(false)}
+              style={[styles.closeButton, { backgroundColor: theme.text }]}
+            >
+              <ThemedText style={[styles.closeButtonText, { color: theme.backgroundRoot }]}>
+                Close
+              </ThemedText>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  content: {
+    paddingHorizontal: Spacing.lg,
+  },
+  section: {
+    marginBottom: Spacing["2xl"],
+  },
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: "500",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: Spacing.sm,
+  },
+  footerPadding: {
+    height: Spacing["4xl"],
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: Spacing.xl,
+  },
+  aboutModal: {
+    width: "100%",
+    maxWidth: 340,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing["2xl"],
+    alignItems: "center",
+  },
+  aboutImage: {
+    width: 100,
+    height: 100,
+    marginBottom: Spacing.lg,
+    opacity: 0.7,
+  },
+  aboutTitle: {
+    marginBottom: Spacing.xs,
+  },
+  aboutVersion: {
+    fontSize: 13,
+    marginBottom: Spacing.xl,
+  },
+  aboutDescription: {
+    fontSize: 14,
+    lineHeight: 22,
+    textAlign: "center",
+    marginBottom: Spacing.xl,
+  },
+  principlesList: {
+    alignSelf: "stretch",
+    marginBottom: Spacing.xl,
+  },
+  principleItem: {
+    fontSize: 14,
+    lineHeight: 28,
+    textAlign: "center",
+  },
+  closeButton: {
+    paddingHorizontal: Spacing["2xl"],
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.sm,
+  },
+  closeButtonText: {
+    fontSize: 15,
+    fontWeight: "600",
+  },
+});

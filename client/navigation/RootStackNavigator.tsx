@@ -1,34 +1,101 @@
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import MainTabNavigator from "@/navigation/MainTabNavigator";
-import ModalScreen from "@/screens/ModalScreen";
+import { Feather } from "@expo/vector-icons";
+import { Pressable, View, StyleSheet, Image } from "react-native";
+import { HeaderButton } from "@react-navigation/elements";
+
+import LedgerScreen from "@/screens/LedgerScreen";
+import NewEntryScreen from "@/screens/NewEntryScreen";
+import EntryDetailScreen from "@/screens/EntryDetailScreen";
+import SettingsScreen from "@/screens/SettingsScreen";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
+import { useTheme } from "@/hooks/useTheme";
+import { ThemedText } from "@/components/ThemedText";
+import { Spacing } from "@/constants/theme";
 
 export type RootStackParamList = {
-  Main: undefined;
-  Modal: undefined;
+  Ledger: undefined;
+  NewEntry: undefined;
+  EntryDetail: { entryId: string };
+  Settings: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+function HeaderTitle() {
+  return (
+    <View style={styles.headerTitleContainer}>
+      <Image
+        source={require("../../assets/images/icon.png")}
+        style={styles.headerIcon}
+        resizeMode="contain"
+      />
+      <ThemedText style={styles.headerTitleText}>The Hand</ThemedText>
+    </View>
+  );
+}
+
 export default function RootStackNavigator() {
   const screenOptions = useScreenOptions();
+  const { theme } = useTheme();
 
   return (
     <Stack.Navigator screenOptions={screenOptions}>
       <Stack.Screen
-        name="Main"
-        component={MainTabNavigator}
-        options={{ headerShown: false }}
+        name="Ledger"
+        component={LedgerScreen}
+        options={({ navigation }) => ({
+          headerTitle: () => <HeaderTitle />,
+          headerLeft: () => (
+            <HeaderButton onPress={() => navigation.navigate("Settings")}>
+              <Feather name="settings" size={22} color={theme.text} />
+            </HeaderButton>
+          ),
+          headerRight: () => (
+            <HeaderButton onPress={() => navigation.navigate("NewEntry")}>
+              <Feather name="plus" size={24} color={theme.text} />
+            </HeaderButton>
+          ),
+        })}
       />
       <Stack.Screen
-        name="Modal"
-        component={ModalScreen}
+        name="NewEntry"
+        component={NewEntryScreen}
         options={{
           presentation: "modal",
-          headerTitle: "Modal",
+          headerTitle: "New Entry",
+        }}
+      />
+      <Stack.Screen
+        name="EntryDetail"
+        component={EntryDetailScreen}
+        options={{
+          headerTitle: "Entry",
+        }}
+      />
+      <Stack.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{
+          headerTitle: "Settings",
         }}
       />
     </Stack.Navigator>
   );
 }
+
+const styles = StyleSheet.create({
+  headerTitleContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  headerIcon: {
+    width: 26,
+    height: 26,
+    marginRight: Spacing.sm,
+  },
+  headerTitleText: {
+    fontSize: 17,
+    fontWeight: "600",
+  },
+});
