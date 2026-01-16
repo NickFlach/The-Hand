@@ -6,6 +6,8 @@ import {
   ScrollView,
   TextInput,
   Pressable,
+  Modal,
+  Platform,
   Alert,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
@@ -27,6 +29,7 @@ export default function TrustedHandsScreen() {
   const [isAdding, setIsAdding] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [contactMethod, setContactMethod] = useState("");
+  const [contactToRevoke, setContactToRevoke] = useState<TrustedContact | null>(null);
 
   const loadContacts = async () => {
     const data = await getActiveTrustedContacts();
@@ -49,146 +52,180 @@ export default function TrustedHandsScreen() {
       setIsAdding(false);
       loadContacts();
     } else {
-      Alert.alert(
-        "Limit reached",
-        "You may have up to 3 trusted hands at a time."
-      );
+      if (Platform.OS === "web") {
+        window.alert("You may have up to 3 trusted hands at a time.");
+      } else {
+        Alert.alert(
+          "Limit reached",
+          "You may have up to 3 trusted hands at a time."
+        );
+      }
     }
   };
 
   const handleRevokeContact = (contact: TrustedContact) => {
-    Alert.alert(
-      "Remove trusted hand",
-      `Remove ${contact.displayName}?\n\nPast shares will remain in your archive but will no longer be accessible to them.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Remove",
-          style: "destructive",
-          onPress: async () => {
-            await revokeTrustedContact(contact.id);
-            loadContacts();
-          },
-        },
-      ]
-    );
+    setContactToRevoke(contact);
+  };
+
+  const confirmRevoke = async () => {
+    if (!contactToRevoke) return;
+    await revokeTrustedContact(contactToRevoke.id);
+    setContactToRevoke(null);
+    loadContacts();
   };
 
   const canAddMore = contacts.length < 3;
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={[
-        styles.content,
-        {
-          paddingTop: headerHeight + Spacing.lg,
-          paddingBottom: insets.bottom + Spacing.xl,
-        },
-      ]}
-    >
-      <View style={styles.descriptionBox}>
-        <Text style={styles.description}>
-          These are people you trust to witness work, not respond to it.
-        </Text>
-      </View>
+    <>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingTop: headerHeight + Spacing.lg,
+            paddingBottom: insets.bottom + Spacing.xl,
+          },
+        ]}
+      >
+        <View style={styles.descriptionBox}>
+          <Text style={styles.description}>
+            These are people you trust to witness work, not respond to it.
+          </Text>
+        </View>
 
-      <View style={styles.limitIndicator}>
-        <Text style={styles.limitText}>
-          {contacts.length} of 3 trusted hands
-        </Text>
-      </View>
+        <View style={styles.limitIndicator}>
+          <Text style={styles.limitText}>
+            {contacts.length} of 3 trusted hands
+          </Text>
+        </View>
 
-      {contacts.length > 0 ? (
-        <View style={styles.contactsList}>
-          {contacts.map((contact) => (
-            <View key={contact.id} style={styles.contactCard}>
-              <View style={styles.contactInfo}>
-                <Text style={styles.contactName}>{contact.displayName}</Text>
-                <Text style={styles.contactMethod}>{contact.contactMethod}</Text>
+        {contacts.length > 0 ? (
+          <View style={styles.contactsList}>
+            {contacts.map((contact) => (
+              <View key={contact.id} style={styles.contactCard}>
+                <View style={styles.contactInfo}>
+                  <Text style={styles.contactName}>{contact.displayName}</Text>
+                  <Text style={styles.contactMethod}>{contact.contactMethod}</Text>
+                </View>
+                <Pressable
+                  onPress={() => handleRevokeContact(contact)}
+                  style={styles.revokeButton}
+                  testID={`button-revoke-${contact.id}`}
+                >
+                  <Feather name="x" size={18} color={Colors.textSecondary} />
+                </Pressable>
               </View>
+            ))}
+          </View>
+        ) : (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>No trusted hands added.</Text>
+          </View>
+        )}
+
+        {isAdding ? (
+          <View style={styles.addForm}>
+            <Text style={styles.formLabel}>NEW TRUSTED HAND</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Their name"
+              placeholderTextColor={Colors.textSecondary}
+              value={displayName}
+              onChangeText={setDisplayName}
+              autoFocus
+              testID="input-display-name"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="How to reach them (email or identifier)"
+              placeholderTextColor={Colors.textSecondary}
+              value={contactMethod}
+              onChangeText={setContactMethod}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              testID="input-contact-method"
+            />
+            <View style={styles.formButtons}>
               <Pressable
-                onPress={() => handleRevokeContact(contact)}
-                style={styles.revokeButton}
-                testID={`button-revoke-${contact.id}`}
+                style={styles.cancelButton}
+                onPress={() => {
+                  setIsAdding(false);
+                  setDisplayName("");
+                  setContactMethod("");
+                }}
+                testID="button-cancel-add"
               >
-                <Feather name="x" size={18} color={Colors.textSecondary} />
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                style={[
+                  styles.createButton,
+                  (!displayName.trim() || !contactMethod.trim()) &&
+                    styles.createButtonDisabled,
+                ]}
+                onPress={handleAddContact}
+                disabled={!displayName.trim() || !contactMethod.trim()}
+                testID="button-create-contact"
+              >
+                <Text style={styles.createButtonText}>Add</Text>
               </Pressable>
             </View>
-          ))}
-        </View>
-      ) : (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>No trusted hands added.</Text>
-        </View>
-      )}
+          </View>
+        ) : canAddMore ? (
+          <Pressable
+            style={styles.addButton}
+            onPress={() => setIsAdding(true)}
+            testID="button-add-trusted-hand"
+          >
+            <Feather name="plus" size={18} color={Colors.textPrimary} />
+            <Text style={styles.addButtonText}>Add trusted hand</Text>
+          </Pressable>
+        ) : null}
 
-      {isAdding ? (
-        <View style={styles.addForm}>
-          <Text style={styles.formLabel}>NEW TRUSTED HAND</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Their name"
-            placeholderTextColor={Colors.textSecondary}
-            value={displayName}
-            onChangeText={setDisplayName}
-            autoFocus
-            testID="input-display-name"
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="How to reach them (email or identifier)"
-            placeholderTextColor={Colors.textSecondary}
-            value={contactMethod}
-            onChangeText={setContactMethod}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            testID="input-contact-method"
-          />
-          <View style={styles.formButtons}>
-            <Pressable
-              style={styles.cancelButton}
-              onPress={() => {
-                setIsAdding(false);
-                setDisplayName("");
-                setContactMethod("");
-              }}
-              testID="button-cancel-add"
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </Pressable>
-            <Pressable
-              style={[
-                styles.createButton,
-                (!displayName.trim() || !contactMethod.trim()) &&
-                  styles.createButtonDisabled,
-              ]}
-              onPress={handleAddContact}
-              disabled={!displayName.trim() || !contactMethod.trim()}
-              testID="button-create-contact"
-            >
-              <Text style={styles.createButtonText}>Add</Text>
-            </Pressable>
+        <View style={styles.noticeBox}>
+          <Text style={styles.noticeText}>
+            When you share an entry with a trusted hand, they can witness it once.
+            They cannot reply, and you will not be notified when they do.
+          </Text>
+        </View>
+      </ScrollView>
+
+      <Modal
+        visible={contactToRevoke !== null}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setContactToRevoke(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.confirmModal}>
+            <Text style={styles.confirmTitle}>Remove trusted hand</Text>
+            <Text style={styles.confirmMessage}>
+              Remove {contactToRevoke?.displayName}?
+            </Text>
+            <Text style={styles.confirmWarning}>
+              Past shares will remain in your archive but will no longer be accessible to them.
+            </Text>
+            <View style={styles.confirmButtons}>
+              <Pressable
+                style={styles.confirmCancelButton}
+                onPress={() => setContactToRevoke(null)}
+                testID="button-cancel-revoke"
+              >
+                <Text style={styles.confirmCancelText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                style={styles.confirmRemoveButton}
+                onPress={confirmRevoke}
+                testID="button-confirm-revoke"
+              >
+                <Text style={styles.confirmRemoveText}>Remove</Text>
+              </Pressable>
+            </View>
           </View>
         </View>
-      ) : canAddMore ? (
-        <Pressable
-          style={styles.addButton}
-          onPress={() => setIsAdding(true)}
-          testID="button-add-trusted-hand"
-        >
-          <Feather name="plus" size={18} color={Colors.textPrimary} />
-          <Text style={styles.addButtonText}>Add trusted hand</Text>
-        </Pressable>
-      ) : null}
-
-      <View style={styles.noticeBox}>
-        <Text style={styles.noticeText}>
-          When you share an entry with a trusted hand, they can witness it once.
-          They cannot reply, and you will not be notified when they do.
-        </Text>
-      </View>
-    </ScrollView>
+      </Modal>
+    </>
   );
 }
 
@@ -335,5 +372,69 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontRegular,
     color: Colors.textSecondary,
     lineHeight: 18,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: Spacing.xl,
+  },
+  confirmModal: {
+    backgroundColor: Colors.background,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.xl,
+    width: "100%",
+    maxWidth: 320,
+  },
+  confirmTitle: {
+    fontSize: Typography.subtitle,
+    fontFamily: Typography.fontRegular,
+    color: Colors.textPrimary,
+    marginBottom: Spacing.md,
+    textAlign: "center",
+  },
+  confirmMessage: {
+    fontSize: Typography.body,
+    fontFamily: Typography.fontRegular,
+    color: Colors.textPrimary,
+    textAlign: "center",
+    marginBottom: Spacing.sm,
+  },
+  confirmWarning: {
+    fontSize: Typography.caption,
+    fontFamily: Typography.fontRegular,
+    color: Colors.textSecondary,
+    textAlign: "center",
+    marginBottom: Spacing.xl,
+  },
+  confirmButtons: {
+    flexDirection: "row",
+    gap: Spacing.md,
+  },
+  confirmCancelButton: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.divider,
+    borderRadius: BorderRadius.sm,
+    alignItems: "center",
+  },
+  confirmCancelText: {
+    fontSize: Typography.body,
+    fontFamily: Typography.fontRegular,
+    color: Colors.textSecondary,
+  },
+  confirmRemoveButton: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    backgroundColor: "#8B0000",
+    borderRadius: BorderRadius.sm,
+    alignItems: "center",
+  },
+  confirmRemoveText: {
+    fontSize: Typography.body,
+    fontFamily: Typography.fontRegular,
+    color: "#FFFFFF",
   },
 });
