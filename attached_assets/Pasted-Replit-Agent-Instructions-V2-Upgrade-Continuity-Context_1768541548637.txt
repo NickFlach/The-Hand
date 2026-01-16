@@ -1,0 +1,258 @@
+Replit Agent Instructions — V2 Upgrade (Continuity)
+Context
+
+You are working on an existing React + Expo mobile app called The Hand.
+V0 and V1 are already implemented and working well. Do not redesign the app.
+Your task is to implement V2 features only, preserving all existing behavior, tone, and constraints.
+
+Non-Negotiable Product Constraints (Re-State)
+
+These are absolute. If any new code violates them, fix it.
+
+Private by default
+
+Local-first
+
+No scores, rankings, streaks, achievements
+
+No notifications (except system-critical)
+
+No AI interpretation or summarization
+
+No behavioral nudges
+
+No public feed or discovery
+
+Silence and gaps are allowed
+
+V2 Theme: Continuity (Memory Across Time)
+
+V2 answers one question only:
+
+“What responsibilities have I carried across time?”
+
+1. Feature Flags (Extend, Don’t Replace)
+
+Confirm existing feature flag system and ensure:
+
+FEATURE_RESPONSIBILITY_THREADS_V2 = true
+FEATURE_LONG_HORIZON_VIEW_V2 = true
+FEATURE_ARTIFACT_ATTACHMENTS_V2 = true
+
+FEATURE_TRUSTED_HANDS_V3 = false
+FEATURE_MOMENTS_OF_POWER_V4 = false
+FEATURE_ARCHIVE_MODE_V5 = false
+
+
+No runtime toggles yet—static config is fine.
+
+2. Responsibility Threads (Core V2 Feature)
+Concept
+
+A Responsibility Thread represents an ongoing responsibility the user chooses to name and maintain over time.
+
+Examples (user-defined):
+
+“Maintaining the CI pipeline”
+
+“Caring for my father”
+
+“Mentoring junior engineers”
+
+Data Model (Additive)
+ResponsibilityThread
+{
+  id: string
+  title: string
+  createdAt: string
+  closedAt?: string
+}
+
+EntryThreadLink
+{
+  entryId: string
+  threadId: string
+}
+
+
+No auto-creation
+
+No auto-suggestions
+
+Threads are user-initiated only
+
+UI Requirements
+Entry Detail Screen
+
+Add a section: “Linked Responsibility”
+
+User may:
+
+Link entry to an existing thread
+
+Create a new thread (title only)
+
+Remove link
+
+No prompts like “You should link this”.
+
+Responsibility Threads Screen (New)
+
+List all threads (active + closed)
+
+Each thread opens to:
+
+Chronological list of linked entries
+
+Creation date
+
+Optional “Close responsibility” action
+
+Closing a thread does not delete anything.
+
+3. Long-Horizon View (Time as Archive)
+New Screen: Archive
+
+This is not analytics.
+
+Behavior
+
+Vertical scroll by year → month
+
+Shows entries grouped by time
+
+Empty periods remain visible (do not collapse silence)
+
+No charts.
+No summaries.
+No “you did more this year”.
+
+This should feel like browsing shelves in an archive.
+
+4. Artifact Attachments (Local Only)
+Purpose
+
+Allow users to attach context, not content.
+
+Rules
+
+Attachments are optional
+
+Local-only storage
+
+No previews beyond filename/type
+
+No parsing or interpretation
+
+Supported Types (V2)
+
+Images
+
+PDFs
+
+Text files
+
+Data Model (Entry Extension)
+attachments?: {
+  id: string
+  filename: string
+  mimeType: string
+  localUri: string
+  createdAt: string
+}[]
+
+5. Export Updates (V2-Compatible)
+
+Ensure export includes:
+
+Responsibility threads
+
+Entry–thread relationships
+
+Attachments metadata (not file blobs unless explicitly selected)
+
+Export copy reminder:
+
+“This is a record, not an evaluation.”
+
+6. UX & Tone Guardrails (Reinforce)
+
+No celebratory language
+
+No progress indicators
+
+No onboarding changes unless required for new features
+
+If something feels optional, make it visually quiet
+
+Default state for most users should remain:
+Entries list → Entry detail
+
+7. Engineering Constraints (React + Expo)
+
+Use Expo FileSystem for attachments
+
+Ensure offline functionality remains intact
+
+Add data migrations for:
+
+threads
+
+links
+
+attachments
+
+Add basic tests:
+
+linking/unlinking entries
+
+thread closure behavior
+
+archive grouping logic
+
+8. Explicit Non-Goals (Do NOT Implement)
+
+Thread analytics
+
+Thread “health”
+
+Suggestions to close/open threads
+
+AI summaries of threads
+
+Shared threads
+
+Reminders related to threads
+
+Deliverables
+
+Responsibility Threads (data + UI)
+
+Archive / Long-Horizon View
+
+Artifact Attachments (local)
+
+Export support updates
+
+Safe data migrations
+
+QA Checklist (Must Pass)
+
+App works fully offline
+
+Threads are fully manual
+
+Silence periods are visible
+
+Attachments stay local
+
+No new notifications
+
+No metrics introduced
+
+Existing V0/V1 flows untouched
+
+Final Instruction
+
+Do not add anything that tries to explain the user to themselves.
+This version exists to remember, not to interpret.

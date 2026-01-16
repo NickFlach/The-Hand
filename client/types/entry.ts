@@ -6,6 +6,14 @@ export interface Addendum {
   createdAt: string;
 }
 
+export interface Attachment {
+  id: string;
+  filename: string;
+  mimeType: string;
+  localUri: string;
+  createdAt: string;
+}
+
 export interface Entry {
   id: string;
   type: EntryType;
@@ -13,6 +21,7 @@ export interface Entry {
   cost: string;
   reflection: string;
   themes?: string[];
+  attachments?: Attachment[];
   createdAt: string;
   updatedAt: string;
   addenda: Addendum[];
@@ -37,6 +46,7 @@ export interface ResponsibilityThread {
   id: string;
   title: string;
   createdAt: string;
+  closedAt?: string;
 }
 
 export interface EntryThreadLink {
@@ -56,4 +66,16 @@ export interface PatternData {
   helped: number;
   learned: number;
   total: number;
+}
+
+export interface ArchiveMonth {
+  year: number;
+  month: number;
+  label: string;
+  entries: Entry[];
+}
+
+export interface ArchiveYear {
+  year: number;
+  months: ArchiveMonth[];
 }
