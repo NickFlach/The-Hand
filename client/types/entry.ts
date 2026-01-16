@@ -58,6 +58,23 @@ export interface TrustedContact {
   id: string;
   displayName: string;
   contactMethod: string;
+  createdAt: string;
+  revokedAt?: string;
+}
+
+export interface SharedEntry {
+  id: string;
+  entryId: string;
+  trustedContactId: string;
+  reason: string;
+  createdAt: string;
+}
+
+export interface TrustedNote {
+  id: string;
+  sharedEntryId: string;
+  createdAt: string;
+  text: string;
 }
 
 export interface PatternData {

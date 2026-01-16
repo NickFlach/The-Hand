@@ -10,8 +10,10 @@ export const FeatureFlags = {
   FEATURE_LONG_HORIZON_VIEW_V2: true,
   FEATURE_ARTIFACT_ATTACHMENTS_V2: true,
 
-  // V3-V5 Features (Scaffolded)
-  FEATURE_TRUSTED_HANDS_V3: false,
+  // V3 Features - Trusted Hands
+  FEATURE_TRUSTED_HANDS_V3: true,
+
+  // V4-V5 Features (Scaffolded)
   FEATURE_MOMENTS_OF_POWER_V4: false,
   FEATURE_ARCHIVE_MODE_V5: false,
 } as const;

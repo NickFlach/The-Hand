@@ -10,6 +10,9 @@ import {
   EntryThreadLink,
   ArchiveYear,
   ArchiveMonth,
+  TrustedContact,
+  SharedEntry,
+  TrustedNote,
 } from "@/types/entry";
 
 const ENTRIES_KEY = "@thehand_entries";
@@ -18,6 +21,9 @@ const REVIEW_NOTES_KEY = "@thehand_review_notes";
 const USER_THEMES_KEY = "@thehand_user_themes";
 const THREADS_KEY = "@thehand_threads";
 const THREAD_LINKS_KEY = "@thehand_thread_links";
+const TRUSTED_CONTACTS_KEY = "@thehand_trusted_contacts";
+const SHARED_ENTRIES_KEY = "@thehand_shared_entries";
+const TRUSTED_NOTES_KEY = "@thehand_trusted_notes";
 
 function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
@@ -256,14 +262,20 @@ export async function exportData(): Promise<string> {
   const entries = await getEntries();
   const threads = await getThreads();
   const links = await getThreadLinks();
+  const trustedContacts = await getTrustedContacts();
+  const sharedEntries = await getSharedEntries();
+  const trustedNotes = await getTrustedNotes();
 
   return JSON.stringify(
     {
       entries,
       threads,
       threadLinks: links,
+      trustedContacts,
+      sharedEntries,
+      trustedNotes,
       exportedAt: new Date().toISOString(),
-      version: "2.0",
+      version: "3.0",
     },
     null,
     2
@@ -274,6 +286,9 @@ export async function exportDataAsText(): Promise<string> {
   const entries = await getEntries();
   const threads = await getThreads();
   const links = await getThreadLinks();
+  const trustedContacts = await getTrustedContacts();
+  const sharedEntries = await getSharedEntries();
+  const trustedNotes = await getTrustedNotes();
 
   let text = "THE HAND — LEDGER EXPORT\n";
   text += "========================\n";
@@ -331,7 +346,33 @@ export async function exportDataAsText(): Promise<string> {
       }
     }
 
+    // Shared entries info
+    const entryShares = sharedEntries.filter((s) => s.entryId === entry.id);
+    if (entryShares.length > 0) {
+      text += `\nShared with:\n`;
+      for (const share of entryShares) {
+        const contact = trustedContacts.find((c) => c.id === share.trustedContactId);
+        text += `  [${new Date(share.createdAt).toLocaleString()}] ${contact?.displayName || "Unknown"}\n`;
+        text += `    Reason: ${share.reason}\n`;
+        const note = trustedNotes.find((n) => n.sharedEntryId === share.id);
+        if (note) {
+          text += `    Witness note: ${note.text}\n`;
+        }
+      }
+    }
+
     text += `\n${"=".repeat(40)}\n\n`;
+  }
+
+  // Trusted Contacts section
+  const activeContacts = trustedContacts.filter((c) => !c.revokedAt);
+  if (activeContacts.length > 0) {
+    text += "\nTRUSTED HANDS\n";
+    text += "-------------\n";
+    for (const contact of activeContacts) {
+      text += `${contact.displayName} (${contact.contactMethod})\n`;
+      text += `  Added: ${new Date(contact.createdAt).toLocaleString()}\n`;
+    }
   }
 
   return text;
@@ -651,4 +692,159 @@ export async function getArchiveData(): Promise<ArchiveYear[]> {
   }
 
   return result;
+}
+
+// ========== TRUSTED CONTACTS (V3) ==========
+
+const MAX_TRUSTED_CONTACTS = 3;
+
+export async function getTrustedContacts(): Promise<TrustedContact[]> {
+  try {
+    const data = await AsyncStorage.getItem(TRUSTED_CONTACTS_KEY);
+    if (data) {
+      return JSON.parse(data);
+    }
+    return [];
+  } catch (error) {
+    console.error("Failed to get trusted contacts:", error);
+    return [];
+  }
+}
+
+export async function getActiveTrustedContacts(): Promise<TrustedContact[]> {
+  const contacts = await getTrustedContacts();
+  return contacts.filter((c) => !c.revokedAt);
+}
+
+export async function getTrustedContact(id: string): Promise<TrustedContact | null> {
+  const contacts = await getTrustedContacts();
+  return contacts.find((c) => c.id === id) || null;
+}
+
+export async function addTrustedContact(
+  displayName: string,
+  contactMethod: string
+): Promise<TrustedContact | null> {
+  const contacts = await getTrustedContacts();
+  const activeContacts = contacts.filter((c) => !c.revokedAt);
+
+  if (activeContacts.length >= MAX_TRUSTED_CONTACTS) {
+    return null;
+  }
+
+  const newContact: TrustedContact = {
+    id: generateId(),
+    displayName: displayName.trim(),
+    contactMethod: contactMethod.trim(),
+    createdAt: new Date().toISOString(),
+  };
+
+  contacts.push(newContact);
+  await AsyncStorage.setItem(TRUSTED_CONTACTS_KEY, JSON.stringify(contacts));
+  return newContact;
+}
+
+export async function revokeTrustedContact(id: string): Promise<TrustedContact | null> {
+  const contacts = await getTrustedContacts();
+  const index = contacts.findIndex((c) => c.id === id);
+
+  if (index === -1) return null;
+
+  contacts[index].revokedAt = new Date().toISOString();
+  await AsyncStorage.setItem(TRUSTED_CONTACTS_KEY, JSON.stringify(contacts));
+  return contacts[index];
+}
+
+// ========== SHARED ENTRIES (V3) ==========
+
+export async function getSharedEntries(): Promise<SharedEntry[]> {
+  try {
+    const data = await AsyncStorage.getItem(SHARED_ENTRIES_KEY);
+    if (data) {
+      return JSON.parse(data);
+    }
+    return [];
+  } catch (error) {
+    console.error("Failed to get shared entries:", error);
+    return [];
+  }
+}
+
+export async function getSharedEntry(id: string): Promise<SharedEntry | null> {
+  const shares = await getSharedEntries();
+  return shares.find((s) => s.id === id) || null;
+}
+
+export async function getSharesForEntry(entryId: string): Promise<SharedEntry[]> {
+  const shares = await getSharedEntries();
+  return shares.filter((s) => s.entryId === entryId);
+}
+
+export async function shareEntry(
+  entryId: string,
+  trustedContactId: string,
+  reason: string
+): Promise<SharedEntry> {
+  const shares = await getSharedEntries();
+
+  const newShare: SharedEntry = {
+    id: generateId(),
+    entryId,
+    trustedContactId,
+    reason: reason.trim(),
+    createdAt: new Date().toISOString(),
+  };
+
+  shares.push(newShare);
+  await AsyncStorage.setItem(SHARED_ENTRIES_KEY, JSON.stringify(shares));
+  return newShare;
+}
+
+// ========== TRUSTED NOTES (V3) ==========
+
+export async function getTrustedNotes(): Promise<TrustedNote[]> {
+  try {
+    const data = await AsyncStorage.getItem(TRUSTED_NOTES_KEY);
+    if (data) {
+      return JSON.parse(data);
+    }
+    return [];
+  } catch (error) {
+    console.error("Failed to get trusted notes:", error);
+    return [];
+  }
+}
+
+export async function getNoteForSharedEntry(sharedEntryId: string): Promise<TrustedNote | null> {
+  const notes = await getTrustedNotes();
+  return notes.find((n) => n.sharedEntryId === sharedEntryId) || null;
+}
+
+export async function getNotesForEntry(entryId: string): Promise<TrustedNote[]> {
+  const shares = await getSharesForEntry(entryId);
+  const notes = await getTrustedNotes();
+  const shareIds = new Set(shares.map((s) => s.id));
+  return notes.filter((n) => shareIds.has(n.sharedEntryId));
+}
+
+export async function addTrustedNote(
+  sharedEntryId: string,
+  text: string
+): Promise<TrustedNote | null> {
+  const notes = await getTrustedNotes();
+
+  // Check if note already exists for this share
+  const existing = notes.find((n) => n.sharedEntryId === sharedEntryId);
+  if (existing) return null;
+
+  const newNote: TrustedNote = {
+    id: generateId(),
+    sharedEntryId,
+    createdAt: new Date().toISOString(),
+    text: text.trim().substring(0, 500),
+  };
+
+  notes.push(newNote);
+  await AsyncStorage.setItem(TRUSTED_NOTES_KEY, JSON.stringify(notes));
+  return newNote;
 }

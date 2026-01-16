@@ -1,0 +1,225 @@
+Replit Agent Instructions — V3 Upgrade (Trusted Hands)
+Context
+
+You are working on an existing React + Expo mobile app called The Hand.
+V0, V1, and V2 are implemented and stable.
+
+Your task is to implement V3: Trusted Hands.
+This adds accountability without audience.
+
+Do not redesign the app.
+Do not expand scope beyond what is explicitly defined.
+
+Non-Negotiable Constraints (Re-Assert)
+
+These rules still apply absolutely:
+
+No public feeds
+
+No discovery
+
+No likes, comments, or reactions
+
+No threads or conversations
+
+No notifications triggered by other people
+
+No AI interpretation or summarization
+
+No social metrics of any kind
+
+If anything violates this, remove it.
+
+V3 THEME: Accountability Without Audience
+
+V3 answers one question only:
+
+“Can I let one or two people see this without turning it into performance?”
+
+1. Feature Flag
+
+Enable:
+
+FEATURE_TRUSTED_HANDS_V3 = true
+
+
+All later phases remain disabled.
+
+2. Trusted Hands — Data Model
+TrustedContact
+{
+  id: string
+  displayName: string
+  contactMethod: string // email or identifier
+  createdAt: string
+}
+
+SharedEntry
+{
+  id: string
+  entryId: string
+  trustedContactId: string
+  reason: string
+  createdAt: string
+}
+
+TrustedNote (One-Way Only)
+{
+  id: string
+  sharedEntryId: string
+  createdAt: string
+  text: string
+}
+
+
+Rules:
+
+Notes are private to the author of the entry
+
+The trusted contact never sees their own note reflected
+
+No back-and-forth
+
+3. Trusted Hands UI
+Trusted Hands Management Screen
+
+User may add up to 3 trusted contacts
+
+Clear copy:
+
+“These are people you trust to witness work, not respond to it.”
+
+No search.
+No suggestions.
+Manual entry only.
+
+Sharing an Entry (Intentional Friction)
+
+From entry detail:
+
+User selects Share with Trusted Hand
+
+Must:
+
+Choose one trusted contact
+
+Enter a reason for sharing
+
+Short text, required
+
+Copy example:
+
+“Why are you sharing this?”
+
+No defaults.
+
+Trusted Notes (Witnessing)
+
+Trusted contact can add one note
+
+Note length limited
+
+No editing after submission
+
+No reply from the author
+
+Author sees note privately
+
+This is witnessing, not discussion.
+
+4. UX Guardrails (Critical)
+
+No notifications when a note is added
+(user sees it next time they open the app)
+
+No badges or indicators
+
+No inbox metaphor
+
+No urgency language
+
+Trusted Hands should feel slightly inconvenient.
+That’s intentional.
+
+5. Export & Privacy
+
+Export must include:
+
+Which entries were shared
+
+With whom
+
+Notes received
+
+Sharing never overrides local ownership
+
+User can revoke a trusted contact at any time
+
+Past shares remain in archive but no longer accessible
+
+6. Explicit Non-Goals (Do NOT Build)
+
+Mutual sharing
+
+Conversations
+
+Threaded notes
+
+Group sharing
+
+Notifications
+
+Read receipts
+
+Activity indicators
+
+If it feels social, it’s wrong.
+
+QA Checklist (Must Pass)
+
+Sharing requires deliberate action
+
+Only one trusted contact per share
+
+Trusted contact can only add one note
+
+No one can respond
+
+No new notifications
+
+No UI elements encourage sharing
+
+App remains fully usable without Trusted Hands
+
+Final Instruction
+
+Trusted Hands is not a community feature.
+It is deliberate exposure to accountability.
+
+2. App Store Update Language — V3
+
+This is review-safe, non-medical, non-productivity framing.
+
+Version Title
+
+Version 1.3 — Trusted Hands
+
+What’s New
+
+Trusted Hands lets you intentionally share a single entry with one person you trust — not for feedback, discussion, or validation, but simply to be witnessed.
+
+There are no feeds, replies, or notifications.
+Sharing is optional and deliberate.
+
+The Hand remains private, local-first, and free of scores or engagement mechanics.
+
+App Description (Addendum Paragraph)
+
+The Hand is a private record of what you build, who you help, and what you learn.
+Trusted Hands adds optional accountability without turning reflection into performance.
+
+Category Reminder
+
+Lifestyle or Utilities
+
+Avoid “mental health”, “habit”, or “behavior change” language
