@@ -1,16 +1,17 @@
 import React, { useState, useCallback, useLayoutEffect } from "react";
-import { StyleSheet, View, ScrollView, Alert } from "react-native";
+import { StyleSheet, View, ScrollView, Alert, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useNavigation, useRoute, useFocusEffect, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { HeaderButton } from "@react-navigation/elements";
+import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Fonts } from "@/constants/theme";
 import { Entry, EntryType } from "@/types/entry";
-import { getEntry, updateEntry, addAddendum, isEditable, formatRelativeTime } from "@/lib/storage";
+import { getEntry, updateEntry, addAddendum, isEditable, formatRelativeTime, getActiveTrustedContacts } from "@/lib/storage";
 import { isFeatureEnabled } from "@/lib/features";
 import { ThemedText } from "@/components/ThemedText";
 import { FormField } from "@/components/FormField";
@@ -18,6 +19,8 @@ import { AddendumSheet } from "@/components/AddendumSheet";
 import { ThemeEditor } from "@/components/ThemeEditor";
 import { ThreadLinker } from "@/components/ThreadLinker";
 import { AttachmentManager } from "@/components/AttachmentManager";
+import ShareEntrySheet from "@/components/ShareEntrySheet";
+import WitnessNotes from "@/components/WitnessNotes";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 type EntryDetailRouteProp = RouteProp<RootStackParamList, "EntryDetail">;
@@ -56,6 +59,9 @@ export default function EntryDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [showAddendumSheet, setShowAddendumSheet] = useState(false);
+  const [showShareSheet, setShowShareSheet] = useState(false);
+  const [hasTrustedContacts, setHasTrustedContacts] = useState(false);
+  const [sharesRefreshKey, setSharesRefreshKey] = useState(0);
 
   const [editedAffected, setEditedAffected] = useState("");
   const [editedCost, setEditedCost] = useState("");
@@ -74,6 +80,10 @@ export default function EntryDetailScreen() {
         setEditedCost(data.cost);
         setEditedReflection(data.reflection);
         setEditedThemes(data.themes || []);
+      }
+      if (isFeatureEnabled("FEATURE_TRUSTED_HANDS_V3")) {
+        const contacts = await getActiveTrustedContacts();
+        setHasTrustedContacts(contacts.length > 0);
       }
     } catch (error) {
       console.error("Failed to load entry:", error);
@@ -298,6 +308,31 @@ export default function EntryDetailScreen() {
           />
         ) : null}
 
+        {!editing && isFeatureEnabled("FEATURE_TRUSTED_HANDS_V3") ? (
+          <View style={styles.shareSection}>
+            <ThemedText style={[styles.sectionLabel, { color: theme.textSecondary }]}>
+              TRUSTED HANDS
+            </ThemedText>
+            {hasTrustedContacts ? (
+              <Pressable
+                style={[styles.shareButton, { borderColor: theme.divider }]}
+                onPress={() => setShowShareSheet(true)}
+                testID="button-share-with-trusted-hand"
+              >
+                <Feather name="eye" size={16} color={theme.textSecondary} />
+                <ThemedText style={[styles.shareButtonText, { color: theme.textSecondary }]}>
+                  Share with trusted hand
+                </ThemedText>
+              </Pressable>
+            ) : (
+              <ThemedText style={[styles.noContactsText, { color: theme.textSecondary }]}>
+                Add trusted hands in Settings to share entries.
+              </ThemedText>
+            )}
+            <WitnessNotes key={sharesRefreshKey} entryId={entry.id} />
+          </View>
+        ) : null}
+
         {entry.addenda.length > 0 ? (
           <View style={[styles.addendaSection, { borderTopColor: theme.divider }]}>
             <ThemedText style={[styles.addendaTitle, { color: theme.textSecondary }]}>
@@ -326,6 +361,16 @@ export default function EntryDetailScreen() {
         visible={showAddendumSheet}
         onClose={() => setShowAddendumSheet(false)}
         onSubmit={handleAddAddendum}
+      />
+
+      <ShareEntrySheet
+        visible={showShareSheet}
+        entryId={entry.id}
+        onClose={() => setShowShareSheet(false)}
+        onShared={() => {
+          setSharesRefreshKey((prev) => prev + 1);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }}
       />
     </View>
   );
@@ -421,5 +466,32 @@ const styles = StyleSheet.create({
   addendumContent: {
     fontSize: 15,
     lineHeight: 22,
+  },
+  shareSection: {
+    marginTop: Spacing.xl,
+    paddingTop: Spacing.lg,
+  },
+  sectionLabel: {
+    fontSize: 13,
+    fontWeight: "500",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: Spacing.md,
+  },
+  shareButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.sm,
+    paddingVertical: Spacing.md,
+    borderWidth: 1,
+    borderRadius: BorderRadius.md,
+  },
+  shareButtonText: {
+    fontSize: 14,
+  },
+  noContactsText: {
+    fontSize: 14,
+    textAlign: "center",
   },
 });

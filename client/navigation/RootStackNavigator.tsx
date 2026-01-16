@@ -14,6 +14,7 @@ import ExportScreen from "@/screens/ExportScreen";
 import ThreadsScreen from "@/screens/ThreadsScreen";
 import ThreadDetailScreen from "@/screens/ThreadDetailScreen";
 import ArchiveScreen from "@/screens/ArchiveScreen";
+import TrustedHandsScreen from "@/screens/TrustedHandsScreen";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
 import { useTheme } from "@/hooks/useTheme";
 import { ThemedText } from "@/components/ThemedText";
@@ -30,6 +31,7 @@ export type RootStackParamList = {
   Threads: undefined;
   ThreadDetail: { threadId: string };
   Archive: undefined;
+  TrustedHands: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -132,6 +134,13 @@ export default function RootStackNavigator() {
         component={ArchiveScreen}
         options={{
           headerTitle: "Archive",
+        }}
+      />
+      <Stack.Screen
+        name="TrustedHands"
+        component={TrustedHandsScreen}
+        options={{
+          headerTitle: "Trusted Hands",
         }}
       />
     </Stack.Navigator>

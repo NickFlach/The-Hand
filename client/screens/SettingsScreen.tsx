@@ -49,6 +49,8 @@ export default function SettingsScreen() {
     isFeatureEnabled("FEATURE_RESPONSIBILITY_THREADS_V2") ||
     isFeatureEnabled("FEATURE_LONG_HORIZON_VIEW_V2");
 
+  const hasV3Tools = isFeatureEnabled("FEATURE_TRUSTED_HANDS_V3");
+
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <ScrollView
@@ -82,6 +84,20 @@ export default function SettingsScreen() {
                 showChevron
               />
             ) : null}
+          </View>
+        ) : null}
+
+        {hasV3Tools ? (
+          <View style={styles.section}>
+            <ThemedText style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+              ACCOUNTABILITY
+            </ThemedText>
+            <SettingsRow
+              label="Trusted Hands"
+              description="People who witness, not respond"
+              onPress={() => navigation.navigate("TrustedHands")}
+              showChevron
+            />
           </View>
         ) : null}
 
@@ -161,7 +177,7 @@ export default function SettingsScreen() {
               The Hand
             </ThemedText>
             <ThemedText style={[styles.aboutVersion, { color: theme.textSecondary }]}>
-              Version 0.2
+              Version 1.3
             </ThemedText>
             <ThemedText style={[styles.aboutDescription, { color: theme.textSecondary }]}>
               A private ledger for recording what you built, who you helped, and what you learned—without performance or judgment.
