@@ -1,0 +1,258 @@
+Product Requirements Document (PRD)
+Product: The Hand
+Version: v0.1 (Foundational)
+Owner: Nick Flach
+Status: Definition
+1. Purpose
+
+The Hand is a private, local-first ledger for recording work that matters.
+
+Its purpose is to help individuals:
+
+Maintain moral clarity about their actions
+
+Reflect on real contribution (not activity)
+
+Hold themselves accountable without performance or judgment
+
+The Hand is not designed to motivate, gamify, or optimize behavior.
+It exists to record truthfully and quietly.
+
+2. Problem Statement
+
+Modern tools incentivize:
+
+Visibility over contribution
+
+Output over impact
+
+Engagement over responsibility
+
+As a result, people lose track of:
+
+What they actually built
+
+Who they actually helped
+
+What they actually learned through cost or correction
+
+The Hand addresses this by providing:
+
+A constrained structure for honest reflection
+
+No social pressure
+
+No reward mechanics
+
+No extraction of attention or data
+
+3. Target User
+Primary User
+
+Builders, engineers, operators, caregivers, artists
+
+People who do real work that affects others
+
+Individuals who value competence and care over recognition
+
+Non-Target Users
+
+Users seeking motivation, affirmation, or gamification
+
+Influencer-driven or audience-driven behavior
+
+Habit-tracking or productivity optimization users
+
+4. Core Principles (Non-Negotiable)
+
+Private by default
+
+Local-first
+
+No scoring, ranking, or streaks
+
+No public feed
+
+No behavioral nudging
+
+User owns and can export all data
+
+Silence is acceptable
+
+Any feature that violates these principles is out of scope.
+
+5. Core Use Case
+
+A user opens The Hand after something meaningful has occurred and records it accurately.
+
+The system does not prompt daily use.
+It does not punish inactivity.
+It does not praise activity.
+
+6. Functional Requirements
+6.1 Entry Types (Exactly Three)
+
+Each entry must be one of:
+
+Built
+
+Created, repaired, improved, or completed something
+
+Helped
+
+Assisted, taught, supported, or carried responsibility for someone else
+
+Learned
+
+A correction, mistake, insight, or hard truth absorbed
+
+No custom categories in v0.1.
+
+6.2 Entry Structure (Required Fields)
+
+Each entry includes:
+
+Type: Built | Helped | Learned
+
+Timestamp: Automatic, immutable
+
+Affected: Who or what this impacted (free text)
+
+Cost: What it cost the user (time, effort, discomfort, risk)
+
+Reflection: What they would do differently next time
+
+Constraints:
+
+Each field limited to short text (2–3 sentences max)
+
+No markdown
+
+No rich media
+
+6.3 Editing Rules
+
+Entries editable for 24 hours
+
+After 24 hours:
+
+Original entry is locked
+
+User may append an Addendum
+
+Addendum is time-stamped separately
+
+Purpose: preserve temporal honesty without punishment.
+
+6.4 Viewing & Navigation
+
+Chronological list (reverse order)
+
+Filter by entry type
+
+No summaries, scores, or trends by default
+
+Optional (later):
+
+Private pattern views (user-initiated only)
+
+6.5 Sharing (Optional, Scarce)
+
+Entry-level sharing only
+
+User must:
+
+Select a specific person or small group
+
+State why they are sharing
+
+No:
+
+Public sharing
+
+Discoverability
+
+Re-sharing
+
+7. Non-Functional Requirements
+7.1 Data & Privacy
+
+Local-first storage
+
+Encrypted at rest
+
+No default cloud sync
+
+Explicit export (JSON + plain text)
+
+The Hand should function fully offline.
+
+7.2 Tone & UX Constraints
+
+Neutral language only
+
+No praise, encouragement, or judgment
+
+No progress indicators
+
+No urgency language (“keep going”, “don’t forget”)
+
+If the system speaks, it must speak sparingly.
+
+7.3 Accessibility
+
+Keyboard navigable
+
+Screen reader compatible
+
+High contrast mode
+
+Plain language reading level
+
+8. Out of Scope (Explicit)
+
+The following are not allowed in v0.1 or v1.0:
+
+Social feeds
+
+Likes, reactions, or comments
+
+Gamification (streaks, badges, points)
+
+AI-generated praise or feedback
+
+Emotional analysis or sentiment scoring
+
+Behavioral nudging
+
+Ads or data monetization
+
+9. Success Criteria (Qualitative)
+
+The Hand is successful if users report:
+
+Increased clarity about their real contributions
+
+Reduced pressure to perform or document everything
+
+Trust in the system’s restraint
+
+Willingness to stop using it without penalty
+
+If users feel compelled to check it daily, the product has failed.
+
+10. Open Design Questions (Intentional)
+
+These are deliberately unresolved:
+
+Should long-term patterns be visible at all?
+
+How much silence is too much silence?
+
+When, if ever, should reflection prompts evolve?
+
+These should be answered through careful use, not speculation.
+
+11. One Sentence Definition (Canonical)
+
+The Hand is a private ledger for recording what you built, who you helped, and what you learned—without performance or judgment.
