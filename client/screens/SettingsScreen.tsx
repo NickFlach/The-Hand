@@ -1,24 +1,27 @@
 import React, { useState, useCallback } from "react";
-import { StyleSheet, View, ScrollView, Share, Alert, Modal, Pressable, Image } from "react-native";
+import { StyleSheet, View, ScrollView, Modal, Pressable, Image } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as Haptics from "expo-haptics";
 
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
-import { Settings, getSettings, updateSettings, exportData, exportDataAsText } from "@/lib/storage";
+import { Settings, getSettings, updateSettings } from "@/lib/storage";
+import { isFeatureEnabled } from "@/lib/features";
 import { SettingsRow } from "@/components/SettingsRow";
 import { ThemedText } from "@/components/ThemedText";
+import { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const { theme } = useTheme();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const [settings, setSettings] = useState<Settings | null>(null);
   const [showAbout, setShowAbout] = useState(false);
-  const [exporting, setExporting] = useState(false);
 
   const loadSettings = useCallback(async () => {
     const data = await getSettings();
@@ -37,29 +40,6 @@ export default function SettingsScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
-  const handleExport = async () => {
-    setExporting(true);
-    try {
-      const jsonData = await exportData();
-      const textData = await exportDataAsText();
-
-      const message = `THE HAND — LEDGER EXPORT\n\n${textData}\n\n---\n\nJSON Data:\n${jsonData}`;
-
-      await Share.share({
-        message,
-        title: "The Hand Export",
-      });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch (error) {
-      if ((error as any).message !== "User did not share") {
-        Alert.alert("Export Failed", "Could not export your data. Please try again.");
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
-    } finally {
-      setExporting(false);
-    }
-  };
-
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <ScrollView
@@ -72,17 +52,39 @@ export default function SettingsScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.section}>
-          <ThemedText style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-            DATA
-          </ThemedText>
-          <SettingsRow
-            label="Export Data"
-            description={exporting ? "Exporting..." : "Share as JSON + plain text"}
-            onPress={handleExport}
-            showChevron
-          />
-        </View>
+        {isFeatureEnabled("FEATURE_PATTERNS_V1") ||
+        isFeatureEnabled("FEATURE_REVIEW_MODE_V1") ||
+        isFeatureEnabled("FEATURE_EXPORT_V1") ? (
+          <View style={styles.section}>
+            <ThemedText style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+              TOOLS
+            </ThemedText>
+            {isFeatureEnabled("FEATURE_PATTERNS_V1") ? (
+              <SettingsRow
+                label="Patterns"
+                description="View entry distribution over time"
+                onPress={() => navigation.navigate("Patterns")}
+                showChevron
+              />
+            ) : null}
+            {isFeatureEnabled("FEATURE_REVIEW_MODE_V1") ? (
+              <SettingsRow
+                label="Review"
+                description="Reflect on entries over a period"
+                onPress={() => navigation.navigate("Review")}
+                showChevron
+              />
+            ) : null}
+            {isFeatureEnabled("FEATURE_EXPORT_V1") ? (
+              <SettingsRow
+                label="Export"
+                description="Export your data"
+                onPress={() => navigation.navigate("Export")}
+                showChevron
+              />
+            ) : null}
+          </View>
+        ) : null}
 
         <View style={styles.section}>
           <ThemedText style={[styles.sectionTitle, { color: theme.textSecondary }]}>

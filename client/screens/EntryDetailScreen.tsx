@@ -11,9 +11,11 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Fonts } from "@/constants/theme";
 import { Entry, EntryType } from "@/types/entry";
 import { getEntry, updateEntry, addAddendum, isEditable, formatRelativeTime } from "@/lib/storage";
+import { isFeatureEnabled } from "@/lib/features";
 import { ThemedText } from "@/components/ThemedText";
 import { FormField } from "@/components/FormField";
 import { AddendumSheet } from "@/components/AddendumSheet";
+import { ThemeEditor } from "@/components/ThemeEditor";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 type EntryDetailRouteProp = RouteProp<RootStackParamList, "EntryDetail">;
@@ -56,6 +58,7 @@ export default function EntryDetailScreen() {
   const [editedAffected, setEditedAffected] = useState("");
   const [editedCost, setEditedCost] = useState("");
   const [editedReflection, setEditedReflection] = useState("");
+  const [editedThemes, setEditedThemes] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
   const canEdit = entry ? isEditable(entry) : false;
@@ -68,6 +71,7 @@ export default function EntryDetailScreen() {
         setEditedAffected(data.affected);
         setEditedCost(data.cost);
         setEditedReflection(data.reflection);
+        setEditedThemes(data.themes || []);
       }
     } catch (error) {
       console.error("Failed to load entry:", error);
@@ -95,6 +99,7 @@ export default function EntryDetailScreen() {
       setEditedAffected(entry.affected);
       setEditedCost(entry.cost);
       setEditedReflection(entry.reflection);
+      setEditedThemes(entry.themes || []);
     }
     setEditing(false);
   };
@@ -108,6 +113,7 @@ export default function EntryDetailScreen() {
         affected: editedAffected.trim(),
         cost: editedCost.trim(),
         reflection: editedReflection.trim(),
+        themes: editedThemes,
       });
       if (updated) {
         setEntry(updated);
@@ -236,6 +242,12 @@ export default function EntryDetailScreen() {
               onChangeText={setEditedReflection}
               maxLength={300}
             />
+            {isFeatureEnabled("FEATURE_THEMES_V1") ? (
+              <ThemeEditor
+                themes={editedThemes}
+                onChange={setEditedThemes}
+              />
+            ) : null}
           </View>
         ) : (
           <View style={styles.fieldsContainer}>
@@ -257,11 +269,18 @@ export default function EntryDetailScreen() {
               </ThemedText>
               <ThemedText style={styles.fieldValue}>{entry.reflection}</ThemedText>
             </View>
+            {isFeatureEnabled("FEATURE_THEMES_V1") ? (
+              <ThemeEditor
+                themes={entry.themes || []}
+                onChange={() => {}}
+                disabled
+              />
+            ) : null}
           </View>
         )}
 
         {entry.addenda.length > 0 ? (
-          <View style={styles.addendaSection}>
+          <View style={[styles.addendaSection, { borderTopColor: theme.divider }]}>
             <ThemedText style={[styles.addendaTitle, { color: theme.textSecondary }]}>
               NOTES
             </ThemedText>
@@ -362,7 +381,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing["2xl"],
     paddingTop: Spacing.xl,
     borderTopWidth: 1,
-    borderTopColor: "#E8E8E4",
   },
   addendaTitle: {
     fontSize: 13,

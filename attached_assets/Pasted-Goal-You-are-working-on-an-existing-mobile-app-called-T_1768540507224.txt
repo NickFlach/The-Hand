@@ -1,0 +1,228 @@
+Goal
+
+You are working on an existing mobile app called The Hand. The app already implements V0 (entries, types, timestamps, edit window, addenda, local-first basics). Do not redesign the UI or rewrite architecture unless necessary. Implement a V1 upgrade and add scaffolding (feature flags + routes/components + data model extension points) for V2–V5, but keep only V1 enabled.
+
+Non-Negotiable Product Constraints
+
+Private by default
+
+Local-first
+
+No scores, streaks, badges, achievements
+
+No public feed
+
+No notifications (except system-critical)
+
+No “insights”, no AI interpretation, no coaching
+
+No behavioral nudges (“keep going”, “you should…”)
+
+No social features beyond intentional entry sharing to a specific person/group (only optional, minimal, and can be stubbed)
+
+If any existing code violates these, fix it.
+
+Phase Plan (Implement V1, Scaffold V2–V5)
+1) Add Feature Flags (Must)
+
+Create a simple feature flag system (local config) so future roadmap phases can be toggled without refactors.
+
+Flags:
+
+FEATURE_PATTERNS_V1 = true
+
+FEATURE_THEMES_V1 = true
+
+FEATURE_REVIEW_MODE_V1 = true
+
+FEATURE_EXPORT_V1 = true
+
+FEATURE_RESPONSIBILITY_THREADS_V2 = false
+
+FEATURE_TRUSTED_HANDS_V3 = false
+
+FEATURE_MOMENTS_OF_POWER_V4 = false
+
+FEATURE_ARCHIVE_MODE_V5 = false
+
+Implementation can be:
+
+a constant file features.ts
+
+or a small config module in your stack
+
+2) Data Model Changes (Minimal, Backward-Compatible)
+
+Extend the entry model without breaking existing stored data.
+
+Entry fields (new)
+
+themes?: string[] (optional, user-defined tags/labels; no system suggestions)
+
+addenda?: { id, createdAt, text }[] (if not already)
+
+updatedAt?: string (if not already)
+
+Additional tables/collections (scaffold only)
+
+responsibilityThreads (V2, disabled): { id, title, createdAt }
+
+entryThreadLinks (V2, disabled): { entryId, threadId }
+
+trustedContacts (V3, disabled): { id, displayName, contactMethod }
+
+Do not build UI for disabled features; just create types and placeholder storage hooks.
+
+3) V1 Feature: Patterns View (Distribution Only)
+
+Add a new screen called Patterns.
+
+Requirements
+
+User must navigate explicitly (no auto prompts).
+
+Show a simple visualization of entry distribution over time:
+
+weekly or monthly grouping is fine
+
+show counts by type (Built / Helped / Learned)
+
+No labels like “improving”, “declining”, “better”, “worse”
+
+No recommendations
+
+UI should be calm and minimal.
+
+If charts are hard in the chosen mobile stack
+
+Use a very simple representation:
+
+grouped bars with basic components
+
+or a table with counts per month/week
+
+4) V1 Feature: Themes (User-Defined Only)
+
+Add an optional theme/tag editor to entry detail.
+
+Requirements
+
+Themes are free-text labels
+
+No auto-complete suggestions from the system (except showing the user’s own previously used themes)
+
+Let users:
+
+add theme
+
+remove theme
+
+Don’t encourage over-tagging
+
+Add a “Themes” section in entry detail and entry edit.
+
+5) V1 Feature: Quiet Review Mode (Manual)
+
+Add a screen called Review:
+
+User selects a time window: 30 / 60 / 90 days
+
+Show entries in that range (read-only list is fine)
+
+At the end show one optional prompt textbox:
+
+“Is there anything here you’d want to do differently going forward?”
+
+Save that reflection as a reviewNote entity (local-only):
+
+{ id, rangeDays, createdAt, text }
+
+No reminders, no scheduling, no streaks.
+
+6) V1 Feature: Export (Artifact)
+
+Add an Export screen with:
+
+Export entries as:
+
+plain text
+
+JSON
+
+Optional: basic PDF if easy; otherwise scaffold PDF export for later.
+
+Export copy must be neutral:
+
+“This is a record. It is not a report card.”
+
+UX & Copy Rules (Important)
+
+Neutral tone.
+
+Never praise the user.
+
+Never push daily usage.
+
+No “Congrats” messages.
+
+Empty states should be calm, e.g.:
+
+“No entries yet.”
+
+“When you build, help, or learn something that matters, you can record it here.”
+
+Engineering Requirements
+
+Keep local-first storage. If cloud sync exists, it must be off by default and must be end-to-end encrypted.
+
+Ensure migrations for stored data are safe.
+
+Add unit tests for:
+
+entry serialization/deserialization with new fields
+
+pattern aggregation logic
+
+review filtering logic
+
+Add simple analytics? No. Do not add tracking.
+
+Deliverables
+
+V1 screens: Patterns, Review, Export
+
+Theme tagging in entry detail
+
+Feature flag scaffolding for V2–V5
+
+Data model updates + migration
+
+Minimal tests + basic QA checklist
+
+Don’t Break What Exists
+
+Do not rewrite navigation unless required.
+
+Do not change core UX flows drastically.
+
+Keep the current design language.
+
+Make small, reversible changes.
+
+QA Checklist (Run Before Shipping)
+
+App works fully offline
+
+No push notifications
+
+No leaderboard / streak / score anywhere
+
+Patterns view shows distributions only
+
+Themes are user-defined only
+
+Review mode is manual only
+
+Export works and produces correct data
+
+Data migration doesn’t lose existing entries

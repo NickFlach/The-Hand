@@ -1,13 +1,16 @@
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
-import { Pressable, View, StyleSheet, Image } from "react-native";
+import { View, StyleSheet, Image } from "react-native";
 import { HeaderButton } from "@react-navigation/elements";
 
 import LedgerScreen from "@/screens/LedgerScreen";
 import NewEntryScreen from "@/screens/NewEntryScreen";
 import EntryDetailScreen from "@/screens/EntryDetailScreen";
 import SettingsScreen from "@/screens/SettingsScreen";
+import PatternsScreen from "@/screens/PatternsScreen";
+import ReviewScreen from "@/screens/ReviewScreen";
+import ExportScreen from "@/screens/ExportScreen";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
 import { useTheme } from "@/hooks/useTheme";
 import { ThemedText } from "@/components/ThemedText";
@@ -18,6 +21,9 @@ export type RootStackParamList = {
   NewEntry: undefined;
   EntryDetail: { entryId: string };
   Settings: undefined;
+  Patterns: undefined;
+  Review: undefined;
+  Export: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -78,6 +84,27 @@ export default function RootStackNavigator() {
         component={SettingsScreen}
         options={{
           headerTitle: "Settings",
+        }}
+      />
+      <Stack.Screen
+        name="Patterns"
+        component={PatternsScreen}
+        options={{
+          headerTitle: "Patterns",
+        }}
+      />
+      <Stack.Screen
+        name="Review"
+        component={ReviewScreen}
+        options={{
+          headerTitle: "Review",
+        }}
+      />
+      <Stack.Screen
+        name="Export"
+        component={ExportScreen}
+        options={{
+          headerTitle: "Export",
         }}
       />
     </Stack.Navigator>

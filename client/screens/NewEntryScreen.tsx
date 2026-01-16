@@ -12,8 +12,10 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing } from "@/constants/theme";
 import { EntryType, EntryFormData } from "@/types/entry";
 import { createEntry } from "@/lib/storage";
+import { isFeatureEnabled } from "@/lib/features";
 import { TypeSelector } from "@/components/TypeSelector";
 import { FormField } from "@/components/FormField";
+import { ThemeEditor } from "@/components/ThemeEditor";
 import { ThemedText } from "@/components/ThemedText";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 
@@ -27,6 +29,7 @@ export default function NewEntryScreen() {
   const [affected, setAffected] = useState("");
   const [cost, setCost] = useState("");
   const [reflection, setReflection] = useState("");
+  const [themes, setThemes] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
   const isValid =
@@ -45,6 +48,7 @@ export default function NewEntryScreen() {
         affected: affected.trim(),
         cost: cost.trim(),
         reflection: reflection.trim(),
+        themes,
       };
       await createEntry(formData);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -59,7 +63,7 @@ export default function NewEntryScreen() {
   };
 
   const handleCancel = () => {
-    if (affected || cost || reflection) {
+    if (affected || cost || reflection || themes.length > 0) {
       Alert.alert(
         "Discard Entry?",
         "Your entry will not be saved.",
@@ -96,7 +100,7 @@ export default function NewEntryScreen() {
         </HeaderButton>
       ),
     });
-  }, [navigation, isValid, saving, affected, cost, reflection, theme]);
+  }, [navigation, isValid, saving, affected, cost, reflection, themes, theme]);
 
   return (
     <KeyboardAwareScrollViewCompat
@@ -139,6 +143,9 @@ export default function NewEntryScreen() {
             onChangeText={setReflection}
             maxLength={300}
           />
+          {isFeatureEnabled("FEATURE_THEMES_V1") ? (
+            <ThemeEditor themes={themes} onChange={setThemes} />
+          ) : null}
         </View>
       ) : (
         <View style={styles.hintContainer}>
