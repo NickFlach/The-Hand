@@ -40,6 +40,15 @@ export default function SettingsScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
+  const hasV1Tools =
+    isFeatureEnabled("FEATURE_PATTERNS_V1") ||
+    isFeatureEnabled("FEATURE_REVIEW_MODE_V1") ||
+    isFeatureEnabled("FEATURE_EXPORT_V1");
+
+  const hasV2Tools =
+    isFeatureEnabled("FEATURE_RESPONSIBILITY_THREADS_V2") ||
+    isFeatureEnabled("FEATURE_LONG_HORIZON_VIEW_V2");
+
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <ScrollView
@@ -52,9 +61,31 @@ export default function SettingsScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {isFeatureEnabled("FEATURE_PATTERNS_V1") ||
-        isFeatureEnabled("FEATURE_REVIEW_MODE_V1") ||
-        isFeatureEnabled("FEATURE_EXPORT_V1") ? (
+        {hasV2Tools ? (
+          <View style={styles.section}>
+            <ThemedText style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+              CONTINUITY
+            </ThemedText>
+            {isFeatureEnabled("FEATURE_RESPONSIBILITY_THREADS_V2") ? (
+              <SettingsRow
+                label="Responsibilities"
+                description="What you carry across time"
+                onPress={() => navigation.navigate("Threads")}
+                showChevron
+              />
+            ) : null}
+            {isFeatureEnabled("FEATURE_LONG_HORIZON_VIEW_V2") ? (
+              <SettingsRow
+                label="Archive"
+                description="Browse entries by time"
+                onPress={() => navigation.navigate("Archive")}
+                showChevron
+              />
+            ) : null}
+          </View>
+        ) : null}
+
+        {hasV1Tools ? (
           <View style={styles.section}>
             <ThemedText style={[styles.sectionTitle, { color: theme.textSecondary }]}>
               TOOLS
@@ -130,7 +161,7 @@ export default function SettingsScreen() {
               The Hand
             </ThemedText>
             <ThemedText style={[styles.aboutVersion, { color: theme.textSecondary }]}>
-              Version 0.1
+              Version 0.2
             </ThemedText>
             <ThemedText style={[styles.aboutDescription, { color: theme.textSecondary }]}>
               A private ledger for recording what you built, who you helped, and what you learned—without performance or judgment.

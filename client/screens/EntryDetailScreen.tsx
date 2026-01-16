@@ -16,6 +16,8 @@ import { ThemedText } from "@/components/ThemedText";
 import { FormField } from "@/components/FormField";
 import { AddendumSheet } from "@/components/AddendumSheet";
 import { ThemeEditor } from "@/components/ThemeEditor";
+import { ThreadLinker } from "@/components/ThreadLinker";
+import { AttachmentManager } from "@/components/AttachmentManager";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 type EntryDetailRouteProp = RouteProp<RootStackParamList, "EntryDetail">;
@@ -278,6 +280,23 @@ export default function EntryDetailScreen() {
             ) : null}
           </View>
         )}
+
+        {!editing && isFeatureEnabled("FEATURE_RESPONSIBILITY_THREADS_V2") ? (
+          <ThreadLinker
+            entryId={entry.id}
+            disabled={false}
+            onUpdate={loadEntry}
+          />
+        ) : null}
+
+        {!editing && isFeatureEnabled("FEATURE_ARTIFACT_ATTACHMENTS_V2") ? (
+          <AttachmentManager
+            entryId={entry.id}
+            attachments={entry.attachments || []}
+            disabled={false}
+            onUpdate={loadEntry}
+          />
+        ) : null}
 
         {entry.addenda.length > 0 ? (
           <View style={[styles.addendaSection, { borderTopColor: theme.divider }]}>

@@ -11,6 +11,9 @@ import SettingsScreen from "@/screens/SettingsScreen";
 import PatternsScreen from "@/screens/PatternsScreen";
 import ReviewScreen from "@/screens/ReviewScreen";
 import ExportScreen from "@/screens/ExportScreen";
+import ThreadsScreen from "@/screens/ThreadsScreen";
+import ThreadDetailScreen from "@/screens/ThreadDetailScreen";
+import ArchiveScreen from "@/screens/ArchiveScreen";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
 import { useTheme } from "@/hooks/useTheme";
 import { ThemedText } from "@/components/ThemedText";
@@ -24,6 +27,9 @@ export type RootStackParamList = {
   Patterns: undefined;
   Review: undefined;
   Export: undefined;
+  Threads: undefined;
+  ThreadDetail: { threadId: string };
+  Archive: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -105,6 +111,27 @@ export default function RootStackNavigator() {
         component={ExportScreen}
         options={{
           headerTitle: "Export",
+        }}
+      />
+      <Stack.Screen
+        name="Threads"
+        component={ThreadsScreen}
+        options={{
+          headerTitle: "Responsibilities",
+        }}
+      />
+      <Stack.Screen
+        name="ThreadDetail"
+        component={ThreadDetailScreen}
+        options={{
+          headerTitle: "Responsibility",
+        }}
+      />
+      <Stack.Screen
+        name="Archive"
+        component={ArchiveScreen}
+        options={{
+          headerTitle: "Archive",
         }}
       />
     </Stack.Navigator>
